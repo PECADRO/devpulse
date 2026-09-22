@@ -1,6 +1,17 @@
 # DevPulse
 
-A local-first developer productivity dashboard. The first release provides a private focus board; future milestones connect GitHub repositories, issues, pull requests, CI, and delivery insights.
+DevPulse is a focused workspace for software developers who want a clear view of what matters next. It keeps day-to-day priorities close at hand without turning the development process into another noisy project-management system.
+
+The current workspace includes a responsive focus board with private browser persistence, progress summaries, keyboard-friendly controls, and a small tested domain layer. Repository activity, issue triage, pull-request health, and delivery insights fit into the same architecture as optional integrations.
+
+## Highlights
+
+- Fast, responsive interface built with TypeScript and Vite
+- Local persistence with no account or external service required
+- Focus items with completion tracking and safe input handling
+- Accessible labels, focus states, and mobile layouts
+- Domain logic covered by automated tests
+- Production build with strict TypeScript checking
 
 ## Run locally
 
@@ -13,8 +24,23 @@ npm run dev
 
 Open the local address printed by Vite. Use `npm test` for unit tests and `npm run build` for type checking and a production build.
 
-Focus items are stored in this browser's `localStorage`. They are not synced or backed up. No GitHub permissions or credentials are needed yet.
+## Project structure
 
-## Status
+```text
+src/
+  domain/focus.ts       Focus-item operations and persistence validation
+  domain/focus.test.ts  Unit tests for the domain layer
+  main.ts               Application rendering and interactions
+  styles.css            Responsive visual system
+```
 
-Milestone 1 of the [20-day roadmap](ROADMAP.md) is complete locally. GitHub publishing and deployment are not configured. The Git author email must be confirmed as belonging to the intended GitHub account before commits are attributed to the profile.
+## Privacy
+
+Focus items are stored in the browser's `localStorage`. They are not transmitted, synchronized, or backed up. Clearing site data removes them.
+
+## Quality checks
+
+```sh
+npm test
+npm run build
+```

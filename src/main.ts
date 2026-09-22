@@ -28,7 +28,7 @@ function render(): void {
           <div>
             <p class="eyebrow">YOUR DEVELOPMENT WORKSPACE</p>
             <h1 id="page-title">Make progress<br /><em>that matters.</em></h1>
-            <p class="hero-copy">Keep the next useful step in sight. DevPulse starts local and private, then grows into a home for your repositories, issues, and delivery signals.</p>
+            <p class="hero-copy">Keep the next useful step in sight. DevPulse gives your priorities a calm, private home and leaves room for the repository signals that shape your work.</p>
             <a class="hero-link" href="#focus">Plan your next move <span aria-hidden="true">↗</span></a>
           </div>
           <div class="hero-visual" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="pulse-core">D</div><div class="tiny-star star-one">✦</div><div class="tiny-star star-two">✦</div></div>
@@ -49,7 +49,7 @@ function render(): void {
             <form id="focus-form" class="focus-form"><label class="sr-only" for="focus-title">New focus item</label><input id="focus-title" name="title" maxlength="120" placeholder="Add a meaningful next step…" required /><button type="submit">Add task <span aria-hidden="true">→</span></button></form>
             ${items.length ? `<ul class="task-list">${items.map(item => `<li class="task ${item.done ? "is-done" : ""}"><button class="check" type="button" data-action="toggle" data-id="${escapeHtml(item.id)}" aria-label="${item.done ? "Mark incomplete" : "Mark complete"}: ${escapeHtml(item.title)}">${item.done ? "✓" : ""}</button><span>${escapeHtml(item.title)}</span><button class="remove" type="button" data-action="remove" data-id="${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(item.title)}">×</button></li>`).join("")}</ul>` : `<div class="empty-state"><div class="empty-icon">✦</div><h3>Start with one clear step</h3><p>Add a priority above. Your list stays on this device and is ready when you come back.</p></div>`}
           </div>
-          <aside class="panel roadmap-panel"><p class="eyebrow">THE ROAD AHEAD</p><h2>Built to grow with you.</h2><p>DevPulse is starting with focus. Over the coming milestones, it will connect the signals behind your work.</p><div class="roadmap-steps"><div><span>01</span><strong>Plan with intention</strong><small>Local focus board · available now</small></div><div><span>02</span><strong>Connect your repos</strong><small>GitHub activity and issue triage</small></div><div><span>03</span><strong>See the full picture</strong><small>Delivery health and insights</small></div></div><span class="roadmap-footer">Version 0.1 · Local-first by design</span></aside>
+          <aside class="panel workspace-panel"><p class="eyebrow">WORKSPACE</p><h2>Built around the way you ship.</h2><p>A useful developer workspace starts with focus and brings supporting signals into view only when they help.</p><div class="workspace-points"><div><span>01</span><strong>Plan with intention</strong><small>Private focus board</small></div><div><span>02</span><strong>Understand your repos</strong><small>Activity and issue context</small></div><div><span>03</span><strong>See delivery clearly</strong><small>Health signals and insights</small></div></div><span class="workspace-note">Local-first by design</span></aside>
         </section>
       </main>
       <footer>DevPulse <span>·</span> Build steadily. Ship thoughtfully.</footer>
