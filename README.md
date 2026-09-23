@@ -8,6 +8,7 @@ The current workspace includes a responsive focus board with private browser per
 
 - Fast, responsive interface built with TypeScript and Vite
 - Local persistence with no account or external service required
+- Versioned workspace data with automatic migration from the original focus-item format
 - Focus items with completion tracking and safe input handling
 - Accessible labels, focus states, and mobile layouts
 - Domain logic covered by automated tests
@@ -30,6 +31,8 @@ Open the local address printed by Vite. Use `npm test` for unit tests and `npm r
 src/
   domain/focus.ts       Focus-item operations and persistence validation
   domain/focus.test.ts  Unit tests for the domain layer
+  domain/workspace.ts   Versioned persistence and data migrations
+  domain/workspace.test.ts  Persistence and migration tests
   main.ts               Application rendering and interactions
   styles.css            Responsive visual system
 ```

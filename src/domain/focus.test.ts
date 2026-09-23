@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addFocusItem, loadFocusItems, removeFocusItem, toggleFocusItem } from "./focus";
+import { addFocusItem, removeFocusItem, toggleFocusItem } from "./focus";
 
 describe("focus items", () => {
   it("rejects blank and oversized titles", () => {
@@ -12,10 +12,5 @@ describe("focus items", () => {
     expect(added[0].title).toBe("Write tests");
     expect(toggleFocusItem(added, "1")[0].done).toBe(true);
     expect(removeFocusItem(added, "1")).toEqual([]);
-  });
-
-  it("ignores corrupt stored data", () => {
-    expect(loadFocusItems({ getItem: () => "not-json" })).toEqual([]);
-    expect(loadFocusItems({ getItem: () => '[{"id":"1"}]' })).toEqual([]);
   });
 });

@@ -1,10 +1,15 @@
-import { addFocusItem, loadFocusItems, removeFocusItem, saveFocusItems, toggleFocusItem, type FocusItem } from "./domain/focus";
+import { addFocusItem, removeFocusItem, toggleFocusItem } from "./domain/focus";
+import { loadWorkspace, saveWorkspace } from "./domain/workspace";
 import "./styles.css";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("App root is missing");
 
-let items: FocusItem[] = loadFocusItems(window.localStorage);
+let workspace = loadWorkspace(window.localStorage);
+
+function persist(): void {
+  saveWorkspace(window.localStorage, workspace);
+}
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, character => ({
@@ -13,8 +18,8 @@ function escapeHtml(value: string): string {
 }
 
 function render(): void {
-  const completed = items.filter(item => item.done).length;
-  const open = items.length - completed;
+  const completed = workspace.focusItems.filter(item => item.done).length;
+  const open = workspace.focusItems.length - completed;
 
   app!.innerHTML = `
     <div class="shell">
@@ -47,7 +52,7 @@ function render(): void {
           <div class="panel focus-panel" id="focus">
             <div class="panel-header"><div><p class="eyebrow">FOCUS BOARD</p><h2>What will you move forward?</h2></div><span class="pill">${open} open</span></div>
             <form id="focus-form" class="focus-form"><label class="sr-only" for="focus-title">New focus item</label><input id="focus-title" name="title" maxlength="120" placeholder="Add a meaningful next step…" required /><button type="submit">Add task <span aria-hidden="true">→</span></button></form>
-            ${items.length ? `<ul class="task-list">${items.map(item => `<li class="task ${item.done ? "is-done" : ""}"><button class="check" type="button" data-action="toggle" data-id="${escapeHtml(item.id)}" aria-label="${item.done ? "Mark incomplete" : "Mark complete"}: ${escapeHtml(item.title)}">${item.done ? "✓" : ""}</button><span>${escapeHtml(item.title)}</span><button class="remove" type="button" data-action="remove" data-id="${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(item.title)}">×</button></li>`).join("")}</ul>` : `<div class="empty-state"><div class="empty-icon">✦</div><h3>Start with one clear step</h3><p>Add a priority above. Your list stays on this device and is ready when you come back.</p></div>`}
+            ${workspace.focusItems.length ? `<ul class="task-list">${workspace.focusItems.map(item => `<li class="task ${item.done ? "is-done" : ""}"><button class="check" type="button" data-action="toggle" data-id="${escapeHtml(item.id)}" aria-label="${item.done ? "Mark incomplete" : "Mark complete"}: ${escapeHtml(item.title)}">${item.done ? "✓" : ""}</button><span>${escapeHtml(item.title)}</span><button class="remove" type="button" data-action="remove" data-id="${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(item.title)}">×</button></li>`).join("")}</ul>` : `<div class="empty-state"><div class="empty-icon">✦</div><h3>Start with one clear step</h3><p>Add a priority above. Your list stays on this device and is ready when you come back.</p></div>`}
           </div>
           <aside class="panel workspace-panel"><p class="eyebrow">WORKSPACE</p><h2>Built around the way you ship.</h2><p>A useful developer workspace starts with focus and brings supporting signals into view only when they help.</p><div class="workspace-points"><div><span>01</span><strong>Plan with intention</strong><small>Private focus board</small></div><div><span>02</span><strong>Understand your repos</strong><small>Activity and issue context</small></div><div><span>03</span><strong>See delivery clearly</strong><small>Health signals and insights</small></div></div><span class="workspace-note">Local-first by design</span></aside>
         </section>
@@ -59,16 +64,18 @@ function render(): void {
     event.preventDefault();
     const input = app!.querySelector<HTMLInputElement>("#focus-title");
     if (!input) return;
-    items = addFocusItem(items, input.value, crypto.randomUUID(), new Date().toISOString());
-    saveFocusItems(window.localStorage, items);
+    workspace.focusItems = addFocusItem(workspace.focusItems, input.value, crypto.randomUUID(), new Date().toISOString());
+    persist();
     render();
     app!.querySelector<HTMLInputElement>("#focus-title")?.focus();
   });
   app!.querySelectorAll<HTMLButtonElement>("[data-action]").forEach(button => button.addEventListener("click", () => {
     const id = button.dataset.id;
     if (!id) return;
-    items = button.dataset.action === "toggle" ? toggleFocusItem(items, id) : removeFocusItem(items, id);
-    saveFocusItems(window.localStorage, items);
+    workspace.focusItems = button.dataset.action === "toggle"
+      ? toggleFocusItem(workspace.focusItems, id)
+      : removeFocusItem(workspace.focusItems, id);
+    persist();
     render();
   }));
 }
