@@ -12,6 +12,7 @@ The current workspace includes a responsive focus board with private browser per
 - Focus items with completion tracking and safe input handling
 - Accessible labels, focus states, and mobile layouts
 - Reusable, tested UI rendering primitives and shared design tokens
+- Typed GitHub connection boundary with in-memory credentials and rate-limit errors
 - Domain logic covered by automated tests
 - Production build with strict TypeScript checking
 
@@ -36,6 +37,8 @@ src/
   domain/workspace.test.ts  Persistence and migration tests
   ui/primitives.ts       Reusable HTML rendering primitives
   ui/primitives.test.ts  Rendering and escaping tests
+  integrations/github.ts  Secure GitHub API connection boundary
+  integrations/github.test.ts  Contract, validation, and error tests
   design-system.css      Shared visual tokens and primitive styles
   main.ts               Application rendering and interactions
   styles.css            Responsive visual system
@@ -44,6 +47,8 @@ src/
 ## Privacy
 
 Focus items are stored in the browser's `localStorage`. They are not transmitted, synchronized, or backed up. Clearing site data removes them.
+
+The GitHub connection layer does not persist access tokens. Authentication must be supplied at request time by an OAuth/session integration, and remote API endpoints must use HTTPS.
 
 ## Quality checks
 
