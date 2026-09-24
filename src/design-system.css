@@ -1,0 +1,57 @@
+:root {
+  --font-body: "DM Sans", sans-serif;
+  --font-display: "Manrope", sans-serif;
+  --color-canvas: #080d18;
+  --color-surface: #101a2b;
+  --color-surface-raised: #171b34;
+  --color-border: #253149;
+  --color-text: #dce7f4;
+  --color-text-muted: #8190a7;
+  --color-accent: #7969ee;
+  --color-accent-soft: #2b2750;
+  --color-success: #71d8aa;
+  --color-warning: #eac28a;
+  --radius-sm: 8px;
+  --radius-md: 15px;
+  --radius-lg: 24px;
+  --focus-ring: 0 0 0 3px #9386f62b;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.badge--accent {
+  background: var(--color-accent-soft);
+  color: #baaaff;
+}
+
+.badge--success {
+  background: #204239;
+  color: var(--color-success);
+}
+
+.badge--warning {
+  background: #493b29;
+  color: var(--color-warning);
+}
+
+.metric-icon.accent {
+  background: #322e55;
+  color: #a79bff;
+}
+
+.metric-icon.success {
+  background: #204239;
+  color: var(--color-success);
+}
+
+.metric-icon.warning {
+  background: #493b29;
+  color: var(--color-warning);
+}

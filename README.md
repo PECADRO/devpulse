@@ -11,6 +11,7 @@ The current workspace includes a responsive focus board with private browser per
 - Versioned workspace data with automatic migration from the original focus-item format
 - Focus items with completion tracking and safe input handling
 - Accessible labels, focus states, and mobile layouts
+- Reusable, tested UI rendering primitives and shared design tokens
 - Domain logic covered by automated tests
 - Production build with strict TypeScript checking
 
@@ -33,6 +34,9 @@ src/
   domain/focus.test.ts  Unit tests for the domain layer
   domain/workspace.ts   Versioned persistence and data migrations
   domain/workspace.test.ts  Persistence and migration tests
+  ui/primitives.ts       Reusable HTML rendering primitives
+  ui/primitives.test.ts  Rendering and escaping tests
+  design-system.css      Shared visual tokens and primitive styles
   main.ts               Application rendering and interactions
   styles.css            Responsive visual system
 ```
