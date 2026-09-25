@@ -37,8 +37,25 @@ describe("workspace persistence", () => {
 
     expect(workspace.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(workspace.focusItems).toEqual([legacyItem]);
+    expect(workspace.repositories).toEqual({ items: [], lastSyncedAt: null });
     expect(storage.data.has(LEGACY_FOCUS_STORAGE_KEY)).toBe(false);
     expect(storage.data.has(WORKSPACE_STORAGE_KEY)).toBe(true);
+  });
+
+  it("migrates a version 1 workspace and persists the upgraded schema", () => {
+    const versionOne = {
+      schemaVersion: 1,
+      focusItems: [{ id: "1", title: "Keep task", done: false, createdAt: "now" }],
+      preferences: { weekStartsOn: "monday" },
+    };
+    const storage = memoryStorage({ [WORKSPACE_STORAGE_KEY]: JSON.stringify(versionOne) });
+
+    const workspace = loadWorkspace(storage);
+
+    expect(workspace.schemaVersion).toBe(2);
+    expect(workspace.focusItems).toEqual(versionOne.focusItems);
+    expect(workspace.repositories).toEqual({ items: [], lastSyncedAt: null });
+    expect(JSON.parse(storage.data.get(WORKSPACE_STORAGE_KEY)!)).toEqual(workspace);
   });
 
   it("keeps valid legacy records and drops malformed ones", () => {
