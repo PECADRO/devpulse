@@ -14,6 +14,7 @@ The current workspace includes a responsive focus board with private browser per
 - Reusable, tested UI rendering primitives and shared design tokens
 - Typed GitHub connection boundary with in-memory credentials and rate-limit errors
 - Versioned repository cache with synchronization change summaries
+- Responsive repository activity view with safe external links
 - Domain logic covered by automated tests
 - Production build with strict TypeScript checking
 
@@ -40,6 +41,8 @@ src/
   domain/repositories.test.ts  Synchronization and diff tests
   ui/primitives.ts       Reusable HTML rendering primitives
   ui/primitives.test.ts  Rendering and escaping tests
+  ui/repository-activity.ts  Repository activity presentation
+  ui/repository-activity.test.ts  Activity rendering and link-safety tests
   integrations/github.ts  Secure GitHub API connection boundary
   integrations/github.test.ts  Contract, validation, and error tests
   design-system.css      Shared visual tokens and primitive styles

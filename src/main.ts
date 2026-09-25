@@ -7,6 +7,7 @@ import {
   renderMetricCard,
   renderWorkspacePoint,
 } from "./ui/primitives";
+import { renderRepositoryActivity, repositorySyncLabel } from "./ui/repository-activity";
 import "./design-system.css";
 import "./styles.css";
 
@@ -46,7 +47,13 @@ function render(): void {
           <div class="metrics">
             ${renderMetricCard({ icon: "↗", label: "Open priorities", value: open, detail: "Keep the list intentional", tone: "accent" })}
             ${renderMetricCard({ icon: "✓", label: "Completed", value: completed, detail: "Every finished step counts", tone: "success" })}
-            ${renderMetricCard({ icon: "◈", label: "Connected repos", value: "—", detail: "GitHub integration is next", tone: "warning" })}
+            ${renderMetricCard({
+              icon: "◈",
+              label: "Connected repos",
+              value: workspace.repositories.items.length,
+              detail: repositorySyncLabel(workspace.repositories),
+              tone: "warning",
+            })}
           </div>
         </section>
 
@@ -62,6 +69,7 @@ function render(): void {
             { index: "03", title: "See delivery clearly", detail: "Health signals and insights" },
           ].map(renderWorkspacePoint).join("")}</div><span class="workspace-note">Local-first by design</span></aside>
         </section>
+        ${renderRepositoryActivity(workspace.repositories)}
       </main>
       <footer>DevPulse <span>·</span> Build steadily. Ship thoughtfully.</footer>
     </div>`;
