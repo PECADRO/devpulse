@@ -2,7 +2,7 @@
 
 DevPulse is a focused workspace for software developers who want a clear view of what matters next. It keeps day-to-day priorities close at hand without turning the development process into another noisy project-management system.
 
-The current workspace includes a responsive focus board with private browser persistence, progress summaries, keyboard-friendly controls, and a small tested domain layer. Repository activity, issue triage, pull-request health, and delivery insights fit into the same architecture as optional integrations.
+The current workspace includes a responsive focus board with private browser persistence, progress summaries, keyboard-friendly controls, and a tested domain layer. Optional GitHub integration adds repository activity plus deterministic issue and pull-request triage without storing credentials.
 
 ## Highlights
 
@@ -15,6 +15,8 @@ The current workspace includes a responsive focus board with private browser per
 - Typed GitHub connection boundary with in-memory credentials and rate-limit errors
 - Versioned repository cache with synchronization change summaries
 - Responsive repository activity view with safe external links
+- Open issue and pull-request retrieval with strict repository-path validation
+- Explainable triage scoring for labels, review readiness, discussion, and waiting time
 - Domain logic covered by automated tests
 - Production build with strict TypeScript checking
 
@@ -39,6 +41,8 @@ src/
   domain/workspace.test.ts  Persistence and migration tests
   domain/repositories.ts  Repository cache and synchronization logic
   domain/repositories.test.ts  Synchronization and diff tests
+  domain/triage.ts     Deterministic issue and pull-request prioritization
+  domain/triage.test.ts  Priority scoring and ordering tests
   ui/primitives.ts       Reusable HTML rendering primitives
   ui/primitives.test.ts  Rendering and escaping tests
   ui/repository-activity.ts  Repository activity presentation

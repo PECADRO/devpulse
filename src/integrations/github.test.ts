@@ -75,4 +75,66 @@ describe("GitHub connection", () => {
     const fetch: FetchLike = async () => Response.json({ id: "wrong", login: "octocat" });
     await expect(createGitHubConnection({ fetch }).getViewer()).rejects.toThrow("invalid viewer response");
   });
+
+  it("loads open issues and excludes pull requests returned by the issues endpoint", async () => {
+    const fetch = vi.fn<FetchLike>(async input => {
+      expect(String(input)).toContain("/repos/octocat/devpulse/issues?state=open");
+      return Response.json([
+        {
+          id: 11,
+          number: 8,
+          title: "Improve keyboard navigation",
+          html_url: "https://github.com/octocat/devpulse/issues/8",
+          labels: [{ name: "accessibility", color: "0e8a16" }],
+          comments: 3,
+          created_at: "2026-09-20T12:00:00Z",
+          updated_at: "2026-09-25T12:00:00Z",
+        },
+        { id: 12, pull_request: { url: "https://api.github.com/example" } },
+      ]);
+    });
+
+    await expect(createGitHubConnection({ fetch }).listIssues("octocat/devpulse")).resolves.toEqual([{
+      id: 11,
+      number: 8,
+      title: "Improve keyboard navigation",
+      url: "https://github.com/octocat/devpulse/issues/8",
+      repositoryFullName: "octocat/devpulse",
+      labels: [{ name: "accessibility", color: "0e8a16" }],
+      comments: 3,
+      createdAt: "2026-09-20T12:00:00Z",
+      updatedAt: "2026-09-25T12:00:00Z",
+    }]);
+  });
+
+  it("loads open pull requests and preserves draft status", async () => {
+    const fetch: FetchLike = async input => {
+      expect(String(input)).toContain("/repos/octocat/devpulse/pulls?state=open");
+      return Response.json([{
+        id: 21,
+        number: 14,
+        title: "Add activity filters",
+        html_url: "https://github.com/octocat/devpulse/pull/14",
+        labels: [],
+        draft: true,
+        created_at: "2026-09-24T12:00:00Z",
+        updated_at: "2026-09-26T12:00:00Z",
+      }]);
+    };
+
+    await expect(createGitHubConnection({ fetch }).listPullRequests("octocat/devpulse")).resolves.toMatchObject([
+      { id: 21, repositoryFullName: "octocat/devpulse", draft: true, comments: 0 },
+    ]);
+  });
+
+  it("rejects repository names that could alter the request path", async () => {
+    const fetch = vi.fn<FetchLike>();
+    const connection = createGitHubConnection({ fetch });
+
+    await expect(connection.listIssues("octocat/devpulse/../private")).rejects.toThrow("owner/name");
+    await expect(connection.listPullRequests("https://github.com/octocat/devpulse")).rejects.toThrow("owner/name");
+    await expect(connection.listIssues("../private")).rejects.toThrow("owner/name");
+    await expect(connection.listPullRequests("octocat/..")).rejects.toThrow("owner/name");
+    expect(fetch).not.toHaveBeenCalled();
+  });
 });

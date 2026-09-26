@@ -18,6 +18,27 @@ export interface GitHubRepository {
   updatedAt: string;
 }
 
+export interface GitHubLabel {
+  name: string;
+  color: string;
+}
+
+export interface GitHubIssue {
+  id: number;
+  number: number;
+  title: string;
+  url: string;
+  repositoryFullName: string;
+  labels: GitHubLabel[];
+  comments: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GitHubPullRequest extends GitHubIssue {
+  draft: boolean;
+}
+
 export interface GitHubTokenSource {
   getToken(): Promise<string | null>;
 }
@@ -33,6 +54,8 @@ export interface GitHubConnectionOptions {
 export interface GitHubConnection {
   getViewer(signal?: AbortSignal): Promise<GitHubViewer>;
   listRepositories(signal?: AbortSignal): Promise<GitHubRepository[]>;
+  listIssues(repositoryFullName: string, signal?: AbortSignal): Promise<GitHubIssue[]>;
+  listPullRequests(repositoryFullName: string, signal?: AbortSignal): Promise<GitHubPullRequest[]>;
 }
 
 export class GitHubApiError extends Error {
@@ -115,6 +138,69 @@ function parseRepository(value: unknown): GitHubRepository {
   };
 }
 
+function normalizeRepositoryFullName(value: string): string {
+  const repositoryFullName = value.trim();
+  const parts = repositoryFullName.split("/");
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repositoryFullName) ||
+      parts.some(part => part === "." || part === "..")) {
+    throw new Error("Repository name must use the owner/name format.");
+  }
+  return repositoryFullName;
+}
+
+function parseLabels(value: unknown): GitHubLabel[] {
+  if (!Array.isArray(value)) throw new Error("GitHub returned an invalid label list.");
+
+  return value.map(label => {
+    if (!isRecord(label) || typeof label.name !== "string" || typeof label.color !== "string") {
+      throw new Error("GitHub returned an invalid label.");
+    }
+    return { name: label.name, color: label.color };
+  });
+}
+
+function parseIssue(value: unknown, repositoryFullName: string): GitHubIssue {
+  if (!isRecord(value) || typeof value.id !== "number" || typeof value.number !== "number" ||
+      typeof value.title !== "string" || typeof value.html_url !== "string" ||
+      typeof value.comments !== "number" || typeof value.created_at !== "string" ||
+      typeof value.updated_at !== "string") {
+    throw new Error("GitHub returned an invalid issue response.");
+  }
+
+  return {
+    id: value.id,
+    number: value.number,
+    title: value.title,
+    url: value.html_url,
+    repositoryFullName,
+    labels: parseLabels(value.labels),
+    comments: value.comments,
+    createdAt: value.created_at,
+    updatedAt: value.updated_at,
+  };
+}
+
+function parsePullRequest(value: unknown, repositoryFullName: string): GitHubPullRequest {
+  if (!isRecord(value) || typeof value.draft !== "boolean" || typeof value.id !== "number" ||
+      typeof value.number !== "number" || typeof value.title !== "string" ||
+      typeof value.html_url !== "string" || typeof value.created_at !== "string" ||
+      typeof value.updated_at !== "string") {
+    throw new Error("GitHub returned an invalid pull request response.");
+  }
+  return {
+    id: value.id,
+    number: value.number,
+    title: value.title,
+    url: value.html_url,
+    repositoryFullName,
+    labels: parseLabels(value.labels),
+    comments: typeof value.comments === "number" ? value.comments : 0,
+    createdAt: value.created_at,
+    updatedAt: value.updated_at,
+    draft: value.draft,
+  };
+}
+
 export function createGitHubConnection(options: GitHubConnectionOptions = {}): GitHubConnection {
   const request = options.fetch ?? globalThis.fetch.bind(globalThis);
   const baseUrl = normalizeApiBaseUrl(options.apiBaseUrl ?? DEFAULT_API_URL);
@@ -165,6 +251,20 @@ export function createGitHubConnection(options: GitHubConnectionOptions = {}): G
       const value = await get("/user/repos?affiliation=owner,collaborator,organization_member&per_page=100&sort=updated", signal);
       if (!Array.isArray(value)) throw new Error("GitHub returned an invalid repository list.");
       return value.map(parseRepository);
+    },
+    async listIssues(repository, signal) {
+      const repositoryFullName = normalizeRepositoryFullName(repository);
+      const value = await get(`/repos/${repositoryFullName}/issues?state=open&per_page=100&sort=updated`, signal);
+      if (!Array.isArray(value)) throw new Error("GitHub returned an invalid issue list.");
+      return value
+        .filter(item => !isRecord(item) || !("pull_request" in item))
+        .map(item => parseIssue(item, repositoryFullName));
+    },
+    async listPullRequests(repository, signal) {
+      const repositoryFullName = normalizeRepositoryFullName(repository);
+      const value = await get(`/repos/${repositoryFullName}/pulls?state=open&per_page=100&sort=updated`, signal);
+      if (!Array.isArray(value)) throw new Error("GitHub returned an invalid pull request list.");
+      return value.map(item => parsePullRequest(item, repositoryFullName));
     },
   };
 }
