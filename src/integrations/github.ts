@@ -54,6 +54,7 @@ export interface GitHubConnectionOptions {
 export interface GitHubConnection {
   getViewer(signal?: AbortSignal): Promise<GitHubViewer>;
   listRepositories(signal?: AbortSignal): Promise<GitHubRepository[]>;
+  listPublicRepositories(owner: string, signal?: AbortSignal): Promise<GitHubRepository[]>;
   listIssues(repositoryFullName: string, signal?: AbortSignal): Promise<GitHubIssue[]>;
   listPullRequests(repositoryFullName: string, signal?: AbortSignal): Promise<GitHubPullRequest[]>;
 }
@@ -146,6 +147,14 @@ function normalizeRepositoryFullName(value: string): string {
     throw new Error("Repository name must use the owner/name format.");
   }
   return repositoryFullName;
+}
+
+function normalizeGitHubOwner(value: string): string {
+  const owner = value.trim();
+  if (!/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(owner) || owner.includes("--")) {
+    throw new Error("GitHub owner must be a valid user or organization name.");
+  }
+  return owner;
 }
 
 function parseLabels(value: unknown): GitHubLabel[] {
@@ -249,6 +258,12 @@ export function createGitHubConnection(options: GitHubConnectionOptions = {}): G
     },
     async listRepositories(signal) {
       const value = await get("/user/repos?affiliation=owner,collaborator,organization_member&per_page=100&sort=updated", signal);
+      if (!Array.isArray(value)) throw new Error("GitHub returned an invalid repository list.");
+      return value.map(parseRepository);
+    },
+    async listPublicRepositories(owner, signal) {
+      const normalizedOwner = normalizeGitHubOwner(owner);
+      const value = await get(`/users/${normalizedOwner}/repos?per_page=100&sort=updated&type=owner`, signal);
       if (!Array.isArray(value)) throw new Error("GitHub returned an invalid repository list.");
       return value.map(parseRepository);
     },

@@ -4,11 +4,13 @@ DevPulse is a TypeScript/Vite application with a deliberately small core. The ap
 
 `src/integrations/github.ts` defines the GitHub boundary independently from the UI. It requests credentials just in time from an injected token source, never stores them, requires HTTPS outside local development, validates response shapes and repository paths, and exposes rate-limit metadata through typed errors. The same boundary retrieves open issues and pull requests while keeping a future OAuth or server-session implementation replaceable without coupling credentials to browser persistence.
 
-`src/domain/repositories.ts` consumes any structurally compatible repository source, normalizes and deduplicates its records, and reports added, updated, and removed repository IDs. The resulting cache is stored in workspace schema v2. Loading a v1 workspace upgrades it in place without discarding focus items or preferences.
+`src/domain/repositories.ts` consumes any structurally compatible repository source, normalizes and deduplicates its records, and reports added, updated, and removed repository IDs. Repository and triage caches are stored in workspace schema v3. Loading earlier workspaces upgrades them in place without discarding focus items, repository data, or preferences.
 
 `src/ui/repository-activity.ts` renders the repository cache without depending on the GitHub client. It handles empty and synchronized states, limits the dashboard list to recent repositories, escapes all remote values, and permits links only to HTTPS GitHub URLs.
 
 `src/domain/triage.ts` converts issue and pull-request records into one ordered queue. Its bounded scoring rules favor explicit urgency labels, review-ready changes, active discussions, and older work. Every score includes human-readable reasons, keeping prioritization transparent and testable.
+
+The browser synchronizes public GitHub data on explicit user action. It examines at most eight recently active repositories per synchronization to keep requests bounded and retains successful results when an individual repository cannot be read. `.github/workflows/deploy-pages.yml` independently verifies tests and the production build before publishing the static artifact.
 
 Principles: keep user data local by default; request the least GitHub permission needed; never put tokens in client-side source or browser storage; provide explicit error and offline states; keep domain logic independent of the UI; verify changes with automated tests and a production build.
 

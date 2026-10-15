@@ -15,8 +15,10 @@ The current workspace includes a responsive focus board with private browser per
 - Typed GitHub connection boundary with in-memory credentials and rate-limit errors
 - Versioned repository cache with synchronization change summaries
 - Responsive repository activity view with safe external links
+- One-step synchronization for recently active public GitHub repositories
 - Open issue and pull-request retrieval with strict repository-path validation
 - Explainable triage scoring for labels, review readiness, discussion, and waiting time
+- Automated test, build, and GitHub Pages deployment workflow
 - Domain logic covered by automated tests
 - Production build with strict TypeScript checking
 
@@ -30,6 +32,12 @@ npm run dev
 ```
 
 Open the local address printed by Vite. Use `npm test` for unit tests and `npm run build` for type checking and a production build.
+
+Enter a GitHub user or organization in the GitHub Triage panel to synchronize its recently active public repositories. DevPulse ranks their open issues and pull requests using visible, deterministic signals. GitHub's unauthenticated API rate limit applies.
+
+## Deploy
+
+Every push to `main` runs the full test suite, creates the production build, and deploys `dist` through GitHub Pages. In the repository settings, set **Pages → Build and deployment → Source** to **GitHub Actions** once; subsequent releases are automatic.
 
 ## Project structure
 
@@ -47,6 +55,8 @@ src/
   ui/primitives.test.ts  Rendering and escaping tests
   ui/repository-activity.ts  Repository activity presentation
   ui/repository-activity.test.ts  Activity rendering and link-safety tests
+  ui/triage.ts         GitHub connection form and ranked queue
+  ui/triage.test.ts    Triage rendering and link-safety tests
   integrations/github.ts  Secure GitHub API connection boundary
   integrations/github.test.ts  Contract, validation, and error tests
   design-system.css      Shared visual tokens and primitive styles
@@ -58,9 +68,9 @@ src/
 
 Focus items are stored in the browser's `localStorage`. They are not transmitted, synchronized, or backed up. Clearing site data removes them.
 
-The GitHub connection layer does not persist access tokens. Authentication must be supplied at request time by an OAuth/session integration, and remote API endpoints must use HTTPS.
+The public synchronization flow does not request or persist access tokens. It sends the entered owner name directly to GitHub's HTTPS API. A future private-repository connection must supply authentication at request time through an OAuth or server session.
 
-Repository metadata is normalized into the versioned workspace cache. Existing workspace data is upgraded automatically when the repository cache is introduced.
+Repository metadata and the ranked triage queue are normalized into the versioned local workspace cache. Existing workspace data is upgraded automatically.
 
 ## Quality checks
 

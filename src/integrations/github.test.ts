@@ -57,6 +57,18 @@ describe("GitHub connection", () => {
     }]);
   });
 
+  it("loads public repositories for a validated owner", async () => {
+    const fetch = vi.fn<FetchLike>(async input => {
+      expect(String(input)).toContain("/users/octocat/repos?per_page=100");
+      return Response.json([]);
+    });
+    const connection = createGitHubConnection({ fetch });
+
+    await expect(connection.listPublicRepositories(" octocat ")).resolves.toEqual([]);
+    await expect(connection.listPublicRepositories("bad--owner")).rejects.toThrow("valid user or organization");
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+
   it("returns typed errors with rate-limit context without exposing response bodies", async () => {
     const fetch: FetchLike = async () => Response.json(
       { message: "API rate limit exceeded", documentation_url: "secret detail" },

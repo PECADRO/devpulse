@@ -38,6 +38,7 @@ describe("workspace persistence", () => {
     expect(workspace.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(workspace.focusItems).toEqual([legacyItem]);
     expect(workspace.repositories).toEqual({ items: [], lastSyncedAt: null });
+    expect(workspace.triage).toEqual({ owner: null, items: [], lastSyncedAt: null });
     expect(storage.data.has(LEGACY_FOCUS_STORAGE_KEY)).toBe(false);
     expect(storage.data.has(WORKSPACE_STORAGE_KEY)).toBe(true);
   });
@@ -52,10 +53,27 @@ describe("workspace persistence", () => {
 
     const workspace = loadWorkspace(storage);
 
-    expect(workspace.schemaVersion).toBe(2);
+    expect(workspace.schemaVersion).toBe(3);
     expect(workspace.focusItems).toEqual(versionOne.focusItems);
     expect(workspace.repositories).toEqual({ items: [], lastSyncedAt: null });
+    expect(workspace.triage).toEqual({ owner: null, items: [], lastSyncedAt: null });
     expect(JSON.parse(storage.data.get(WORKSPACE_STORAGE_KEY)!)).toEqual(workspace);
+  });
+
+  it("migrates a version 2 repository cache into the current workspace", () => {
+    const versionTwo = {
+      schemaVersion: 2,
+      focusItems: [],
+      repositories: { items: [], lastSyncedAt: "2026-09-25T12:00:00Z" },
+      preferences: { weekStartsOn: "monday" },
+    };
+    const storage = memoryStorage({ [WORKSPACE_STORAGE_KEY]: JSON.stringify(versionTwo) });
+
+    const workspace = loadWorkspace(storage);
+
+    expect(workspace.schemaVersion).toBe(3);
+    expect(workspace.repositories).toEqual(versionTwo.repositories);
+    expect(workspace.triage).toEqual({ owner: null, items: [], lastSyncedAt: null });
   });
 
   it("keeps valid legacy records and drops malformed ones", () => {

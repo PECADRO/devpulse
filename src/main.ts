@@ -1,5 +1,8 @@
 import { addFocusItem, removeFocusItem, toggleFocusItem } from "./domain/focus";
+import { synchronizeRepositories } from "./domain/repositories";
+import { buildTriageQueue } from "./domain/triage";
 import { loadWorkspace, saveWorkspace } from "./domain/workspace";
+import { createGitHubConnection } from "./integrations/github";
 import {
   renderBadge,
   renderEmptyState,
@@ -8,6 +11,7 @@ import {
   renderWorkspacePoint,
 } from "./ui/primitives";
 import { renderRepositoryActivity, repositorySyncLabel } from "./ui/repository-activity";
+import { renderTriage } from "./ui/triage";
 import "./design-system.css";
 import "./styles.css";
 
@@ -15,9 +19,64 @@ const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("App root is missing");
 
 let workspace = loadWorkspace(window.localStorage);
+let syncStatus = "";
+let isSyncing = false;
 
 function persist(): void {
   saveWorkspace(window.localStorage, workspace);
+}
+
+async function syncGitHub(ownerInput: string): Promise<void> {
+  if (isSyncing) return;
+  isSyncing = true;
+  syncStatus = "Loading public repositories…";
+  render();
+
+  try {
+    const owner = ownerInput.trim();
+    const connection = createGitHubConnection();
+    const syncedAt = new Date().toISOString();
+    const repositoryResult = await synchronizeRepositories(
+      { listRepositories: signal => connection.listPublicRepositories(owner, signal) },
+      workspace.repositories,
+      syncedAt,
+    );
+    const activeRepositories = repositoryResult.cache.items.slice(0, 8);
+    syncStatus = `Ranking open work from ${activeRepositories.length} active repositories…`;
+    render();
+
+    const results = await Promise.allSettled(activeRepositories.map(async repository => {
+      const [issues, pullRequests] = await Promise.all([
+        connection.listIssues(repository.fullName),
+        connection.listPullRequests(repository.fullName),
+      ]);
+      return { issues, pullRequests };
+    }));
+    const successful = results.filter(result => result.status === "fulfilled");
+    if (activeRepositories.length > 0 && successful.length === 0) {
+      const failed = results.find(result => result.status === "rejected") as PromiseRejectedResult | undefined;
+      throw failed?.reason instanceof Error ? failed.reason : new Error("GitHub triage could not be loaded.");
+    }
+
+    const issues = successful.flatMap(result => result.value.issues);
+    const pullRequests = successful.flatMap(result => result.value.pullRequests);
+    workspace.repositories = repositoryResult.cache;
+    workspace.triage = {
+      owner,
+      items: buildTriageQueue(issues, pullRequests),
+      lastSyncedAt: syncedAt,
+    };
+    persist();
+    const skipped = results.length - successful.length;
+    syncStatus = skipped
+      ? `Sync complete. ${skipped} repositories could not be read.`
+      : "GitHub sync complete.";
+  } catch (error) {
+    syncStatus = error instanceof Error ? error.message : "GitHub sync failed. Please try again.";
+  } finally {
+    isSyncing = false;
+    render();
+  }
 }
 
 function render(): void {
@@ -70,6 +129,7 @@ function render(): void {
           ].map(renderWorkspacePoint).join("")}</div><span class="workspace-note">Local-first by design</span></aside>
         </section>
         ${renderRepositoryActivity(workspace.repositories)}
+        ${renderTriage(workspace.triage, syncStatus, isSyncing)}
       </main>
       <footer>DevPulse <span>·</span> Build steadily. Ship thoughtfully.</footer>
     </div>`;
@@ -92,6 +152,11 @@ function render(): void {
     persist();
     render();
   }));
+  app!.querySelector<HTMLFormElement>("#github-form")?.addEventListener("submit", event => {
+    event.preventDefault();
+    const input = app!.querySelector<HTMLInputElement>("#github-owner");
+    if (input) void syncGitHub(input.value);
+  });
 }
 
 render();
